@@ -20,10 +20,14 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
+import androidx.navigation.compose.*
+import com.example.androiddevchallenge.model.DogInfo
+import com.example.androiddevchallenge.ui.screens.dogDetails.DogDetailsScreen
 import com.example.androiddevchallenge.ui.theme.MyTheme
+import com.example.androiddevchallenge.ui.screens.dogList.DogListScreen
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,11 +40,32 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-// Start building your app here!
+object MainDestinations {
+    const val List = "list"
+    const val DogDetailsRoute = "dogDetails"
+    const val DogDetailsIdKey = "dogInfoId"
+}
+
 @Composable
 fun MyApp() {
     Surface(color = MaterialTheme.colors.background) {
-        Text(text = "Ready... Set... GO!")
+        val navController = rememberNavController()
+        NavHost(navController, startDestination = "list") {
+            composable(MainDestinations.List) {
+                DogListScreen(DogInfo.mocks.values.sortedBy { it.id }) { dogInfoId ->
+                    navController.navigate("${MainDestinations.DogDetailsRoute}/$dogInfoId")
+                }
+            }
+            composable(
+                route = "${MainDestinations.DogDetailsRoute}/{${MainDestinations.DogDetailsIdKey}}",
+                arguments = listOf(navArgument(MainDestinations.DogDetailsIdKey) { type = NavType.IntType })
+            ) { backStackEntry ->
+                val arguments = requireNotNull(backStackEntry.arguments)
+                val dogId = arguments.getInt(MainDestinations.DogDetailsIdKey)
+                val dogInfo = requireNotNull(DogInfo.mocks[dogId])
+                DogDetailsScreen(dogInfo)
+            }
+        }
     }
 }
 
